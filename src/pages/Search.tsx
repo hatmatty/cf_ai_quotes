@@ -6,7 +6,7 @@ export default () => {
         <input
           type="text"
           id="search-input"
-          placeholder="Search for a quote..."
+          placeholder="Describe a quote..."
         />
       </section>
       <section id="search-results" class="quote-grid"></section>

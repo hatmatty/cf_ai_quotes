@@ -33,18 +33,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function renderSearch(query) {
+    // Show loading indicator
+    searchResultsContainer.innerHTML = '<p class="loading-indicator">Searching for quotes</p>';
+    
     try {
       const response = await fetch(
         `/api/quotes/search?q=${encodeURIComponent(query)}`
       );
-      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.ok) {
+        console.error('Search API returned error:', response.status);
+        searchResultsContainer.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">Search failed. Please try again.</p>';
+        return;
+      }
       const data = await response.json();
       searchResultsContainer.innerHTML = "";
+      
+      if (!data.results || data.results.length === 0) {
+        searchResultsContainer.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">No quotes found matching your search.</p>';
+        return;
+      }
+      
       data.results.forEach((result) => {
-        createQuoteBox(result.quote, result.id, searchResultsContainer, likedIds, { tags: result.tags, score: result.score });
+        createQuoteBox(result.quote, result.id, searchResultsContainer, likedIds, { tags: result.tags, score: result.score, author: result.author });
       });
     } catch (error) {
       console.error("Error fetching search results:", error);
+      searchResultsContainer.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 40px;">An error occurred. Please try again.</p>';
     }
   }
 

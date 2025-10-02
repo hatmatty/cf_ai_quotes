@@ -1,5 +1,7 @@
 # Quotes App
 
+Deployed Site: https://quotes.mkollu3.workers.dev/
+
 A full-stack Cloudflare Workers application for creating, viewing, and searching quotes with AI-powered features. Built with Hono, TSX templates, D1, Vectorize, Workers AI, KV, and Workflows.
 
 ## Assignment Requirements Fulfilled
@@ -58,6 +60,119 @@ This application demonstrates a complete AI-powered application built on Cloudfl
 
 ---
 
+## Deployed Site Walkthrough
+
+**Deployed Site:** https://quotes.mkollu3.workers.dev/
+
+### 🏠 Home Page (`/`)
+When you first visit the site, you'll see a grid of quotes displayed in a clean, modern interface.
+
+**Quote Display:**
+- Each quote card shows the quote text, author (if available), and up to 3 color-coded category tags
+- 50 available tag categories (Motivational, Inspirational, Wisdom, Love, etc.) each with distinct RGB colors from `TAGS.txt`
+- Real-time upvote/downvote buttons with live score updates (upvotes - downvotes)
+- Click any quote to navigate to its detailed view
+
+**Semantic Search:**
+- Search by *describing* the type of quote you want (e.g., "quotes about overcoming challenges")
+- Powered by **Vectorize** similarity search using the `@cf/baai/bge-large-en-v1.5` embeddings model
+- Searches against both the quote text AND AI-generated summaries for better semantic matching
+- Results automatically sorted by relevance score (threshold: 0.3)
+
+**Navigation:**
+- "New Quote" button takes you to the creation form
+- "My Quotes" button shows your personal page with liked and created quotes
+
+### 📝 Quote Creation (`/new`)
+Create and submit new quotes to the platform.
+
+**User Input:**
+- Quote text (required) - the actual quote without quotation marks
+- Author name (optional) - leave blank for anonymous quotes
+- Category tags (1-3 required) - select from dropdown of 50 categories
+
+**AI Processing Pipeline (via PublishWorkflow):**
+1. **Moderation Check**: Llama 3.3 analyzes the quote for inappropriate content
+   - If flagged, user receives immediate rejection notice
+   - Only approved quotes proceed to next steps
+2. **AI Summarization**: Llama 3.3 generates a 1-3 sentence summary explaining the quote's meaning and significance
+3. **Vectorization**: Combined quote + summary embedded using `@cf/baai/bge-large-en-v1.5` and stored in Vectorize
+4. **Storage**: Quote metadata saved to D1 database with timestamps
+
+All created quotes appear on your personal page (`/me`).
+
+### 🔍 Quote Detail Page (`/quote/:id`)
+Click any quote to see an expanded view with additional context.
+
+**Main Display:**
+- Large format quote text
+- Author name (if provided) or "Anonymous"
+- All category tags with color coding
+- Upvote/downvote buttons with current score
+
+**Similar Quotes:**
+- Grid of related quotes powered by **Vectorize similarity search**
+- Compares embeddings to find semantically similar content
+- Helps discover quotes with related themes or meanings
+- Each similar quote is clickable to view its detail page
+
+### 👤 Personal Page (`/me`)
+Track your activity and favorite quotes.
+
+**Two Sections:**
+1. **Quotes I Created**: All quotes you've submitted to the platform
+   - Shows approval status (moderated quotes won't appear)
+   - Displays tags, scores, and authors you assigned
+2. **Quotes I Liked**: All quotes you've upvoted
+   - Persisted via browser cookies linked to your session
+   - Hearts pre-filled on quote cards you've liked
+
+Both sections show "None" if empty. All quotes are clickable to view details.
+
+### 🔎 Advanced Search (`/search`)
+Dedicated search interface for exploring quotes by semantic meaning.
+
+- Full-page search experience
+- Same Vectorize-powered semantic search as home page
+- Results displayed in grid format with all quote metadata
+
+### 🤖 AI Background Features (Not Visible in UI)
+
+**Automatic Quote Generation (AutoQuoteWorkflow):**
+- **Generation**: AI analyzes top 10 most-upvoted quotes and creates an original quote inspired by patterns and themes
+- **Categorization**: AI assigns relevant tags based on content
+- **Evaluation**: After a waiting period, AI checks if the generated quote achieved +2 net upvotes
+  - ✅ Keeps quote if successful
+  - ❌ Deletes quote if it didn't resonate with users
+- **Scheduling**:
+  - `PRODUCTION` mode: Generates every 30 minutes, evaluates after 2 days
+  - `DEBUG` mode: Generates every 1 minute, evaluates after 10 minutes
+- All AI-generated quotes are anonymous (no author)
+
+**Workflow Coordination:**
+- **PublishWorkflow**: Multi-step moderation → summarization → vectorization pipeline
+- **AutoQuoteWorkflow**: Handles AI quote generation lifecycle with delayed evaluation
+- **InteractionWorkflow**: Manages AI chat interactions for quote suggestions
+- **LeaderboardWorkflow**: Tracks trending quotes based on recent likes (backend data gathering)
+
+### 🛠️ Technical Implementation Highlights
+
+**State & Memory:**
+- **D1 Database**: Stores quotes, interactions, metadata, timestamps
+- **Vectorize**: 384-dimensional embeddings for semantic search
+- **KV Namespace**: Caches leaderboard and statistics data
+- **Browser Cookies**: Tracks user's liked quotes and created content
+
+**AI Models:**
+- **Llama 3.3** (`@cf/meta/llama-3-8b-instruct`): Content moderation, summarization, quote generation
+- **BGE Large EN** (`@cf/baai/bge-large-en-v1.5`): Text embeddings for similarity search
+
+**Frontend:**
+- Server-side rendered TSX templates (Hono + JSX)
+- Client-side JavaScript for dynamic interactions
+- Workers Static Assets serving from `/public` directory
+- Real-time upvote/downvote updates without page refresh 
+
 ## Prerequisites
 
 - Node.js 18+
@@ -77,13 +192,13 @@ npm install
 Create required resources and note the returned IDs:
 
 ```bash
-# D1 database (copy the database_id from output)
-npx wrangler d1 create quotes
+# D1 database 
+npx wrangler d1 create quotes # make sure to name the binding as DB!
 
 # Vectorize index with embeddings model
 npx wrangler vectorize create quotes --preset "@cf/baai/bge-large-en-v1.5"
 
-# KV namespace (copy the id from output)
+# KV namespace 
 npx wrangler kv namespace create LEADERBOARD
 ```
 
@@ -132,6 +247,7 @@ Default setup uses Workers AI (no API key required).
 ### 7. Load Initial Data
 
 ```bash
+# uses 8787 as the port!
 npm run load:local
 ```
 
@@ -181,10 +297,12 @@ Modify `triggers.crons` in `wrangler.jsonc`:
 
 ### Wipe Data
 
+Completely clears all data from D1 tables, KV namespace, and Vectorize index:
+
 ```bash
-npm run wipe:local   # Clear local development data
-npm run wipe:remote  # Clear production data
-npm run wipe:both    # Clear both
+npm run wipe:local   # Clear local D1, local KV, and Vectorize
+npm run wipe:remote  # Clear remote D1, remote KV, and Vectorize
+npm run wipe:both    # Clear both local and remote
 ```
 
 ### Load Initial Data

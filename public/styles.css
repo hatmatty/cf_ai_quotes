@@ -152,7 +152,7 @@ html::before {
 }
 
 .search-section {
-  padding: 24px;
+  padding: 14px 24px;
   width: 100%;
   max-width: 900px;
   margin: 24px auto 0;
@@ -399,6 +399,11 @@ html::before {
   transform: scale(1); /* liked hover target */
 }
 
+.heart:focus,
+.heart:focus-visible {
+  outline: none;
+}
+
 .downvote {
   position: absolute;
   bottom: 2px; /* align with heart after moving lower */
@@ -424,6 +429,11 @@ html::before {
   transform: scale(1.15);
   background-image: url('/icons/thumbsdown-filled.png');
   opacity: 0.5;
+}
+
+.downvote:focus,
+.downvote:focus-visible {
+  outline: none;
 }
 
 /* When the heart is liked and scales up, give extra spacing to avoid overlap */
@@ -613,6 +623,24 @@ html::before {
 
 .tag-modal-actions button:hover {
   background: #b6a27f;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.loading-indicator::after {
+  content: '...';
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
 }
 
 .pun-grid,

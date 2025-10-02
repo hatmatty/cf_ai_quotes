@@ -55,6 +55,11 @@ app.use(
             name="viewport"
             content="width=device-width, initial-scale=1.0"
           />
+          {/* Preload critical icon images */}
+          <link rel="preload" href="/icons/heart.png" as="image" type="image/png" />
+          <link rel="preload" href="/icons/heart-filled.png" as="image" type="image/png" />
+          <link rel="preload" href="/icons/thumbsdown-outline.png" as="image" type="image/png" />
+          <link rel="preload" href="/icons/thumbsdown-filled.png" as="image" type="image/png" />
               <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css" />
           <link rel="stylesheet" href="/styles.css" />
           <script defer src="/scripts/utils.js" />
@@ -68,7 +73,7 @@ app.use(
               <a href="/new" class="new-quote-link">
                 ➕
               </a>
-              <a href="/search" class="search-link">
+              <a href="/" class="search-link">
                 🔍
               </a>
               <a href="/me" class="profile-link">
@@ -147,62 +152,77 @@ async function getSimilarQuoteIdsById(
   c: Context<{ Bindings: Env; Variables: Variables }>,
   quoteId: string
 ): Promise<Array<string>> {
-  const vectorize = (c.env as any).VECTORIZE as any;
-  if (!vectorize || typeof vectorize.getByIds !== 'function' || typeof vectorize.query !== 'function') {
-    return [];
-  }
-  const quoteVectors = await vectorize.getByIds([
-    `content-${quoteId}`,
-    `categories-${quoteId}`,
-  ]);
-
-  const [contentVec, categoryVec] = quoteVectors || [];
-  const queries: Array<Promise<any>> = [];
-  if (contentVec && Array.isArray(contentVec.values)) {
-    queries.push(
-      vectorize.query(contentVec.values, {
-        namespace: "content",
-        returnMetadata: true,
-        topK: 20,
-      })
-    );
-  }
-  if (categoryVec && Array.isArray(categoryVec.values)) {
-    queries.push(
-      vectorize.query(categoryVec.values, {
-        namespace: "categories",
-        returnMetadata: true,
-        topK: 10,
-      })
-    );
-  }
-
-  if (queries.length === 0) {
-    return [];
-  }
-
-  const resultsSets = await Promise.all(queries);
-  const scoreById = new Map<string, number>();
-
-  for (const set of resultsSets) {
-    const matches = (set?.matches ?? []) as Array<any>;
-    for (const m of matches) {
-      const id = m?.metadata?.quoteId as string | undefined;
-      const score = typeof m?.score === 'number' ? m.score : 0;
-      if (!id || id === quoteId) continue; // skip invalid and self
-      if (score <= 0.3) continue; // threshold
-      const prev = scoreById.get(id) ?? -Infinity;
-      if (score > prev) scoreById.set(id, score);
+  try {
+    const vectorize = (c.env as any).VECTORIZE as any;
+    if (!vectorize || typeof vectorize.getByIds !== 'function' || typeof vectorize.query !== 'function') {
+      console.error('Vectorize not available for similarity search');
+      return [];
     }
+    
+    const quoteVectors = await vectorize.getByIds([
+      `content-${quoteId}`,
+      `categories-${quoteId}`,
+    ]);
+
+    const [contentVec, categoryVec] = quoteVectors || [];
+    const queries: Array<Promise<any>> = [];
+    
+    if (contentVec && Array.isArray(contentVec.values) && contentVec.values.length > 0) {
+      queries.push(
+        vectorize.query(contentVec.values, {
+          namespace: "content",
+          returnMetadata: true,
+          topK: 20,
+        })
+      );
+    }
+    
+    if (categoryVec && Array.isArray(categoryVec.values) && categoryVec.values.length > 0) {
+      queries.push(
+        vectorize.query(categoryVec.values, {
+          namespace: "categories",
+          returnMetadata: true,
+          topK: 10,
+        })
+      );
+    }
+
+    if (queries.length === 0) {
+      console.warn(`No vectors found for quote ${quoteId}`);
+      return [];
+    }
+
+    const resultsSets = await Promise.all(queries);
+    const scoreById = new Map<string, number>();
+
+    for (const set of resultsSets) {
+      if (!set || !set.matches) {
+        console.warn('Invalid vectorize results in similarity search:', set);
+        continue;
+      }
+      
+      const matches = (set.matches ?? []) as Array<any>;
+      for (const m of matches) {
+        const id = m?.metadata?.quoteId as string | undefined;
+        const score = typeof m?.score === 'number' ? m.score : 0;
+        if (!id || id === quoteId) continue; // skip invalid and self
+        if (score <= 0.3) continue; // threshold
+        const prev = scoreById.get(id) ?? -Infinity;
+        if (score > prev) scoreById.set(id, score);
+      }
+    }
+
+    // Sort by score desc and cap results
+    const sorted = Array.from(scoreById.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([id]) => id);
+
+    return sorted;
+  } catch (error) {
+    console.error('Error in getSimilarQuoteIdsById:', error);
+    return [];
   }
-
-  // Sort by score desc and cap results
-  const sorted = Array.from(scoreById.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 20)
-    .map(([id]) => id);
-
-  return sorted;
 }
 
 async function getLikedQuotesForUser(
@@ -395,28 +415,50 @@ app.post('/api/quotes/:quoteId/vote', async (c) => {
 
 app.get("/api/quotes/search", async (c) => {
   const query = c.req.query("q") || "";
-  if (query === undefined) {
+  
+  // Return empty results for empty or whitespace-only queries
+  if (!query || query.trim() === "") {
     return c.json({ results: [] });
   }
-  const embeddingResult = await c.env.AI.run("@cf/baai/bge-large-en-v1.5", {
-    text: query,
-  });
 
-  const vector = ((embeddingResult as any).data?.[0] ?? (embeddingResult as any).data) as number[];
-  const vectorize = (c.env as any).VECTORIZE as any;
-  if (!vectorize || typeof vectorize.query !== 'function') {
-    return c.json({ results: [] });
+  try {
+    const embeddingResult = await c.env.AI.run("@cf/baai/bge-large-en-v1.5", {
+      text: query,
+    });
+
+    const vector = ((embeddingResult as any).data?.[0] ?? (embeddingResult as any).data) as number[];
+    const vectorize = (c.env as any).VECTORIZE as any;
+    if (!vectorize || typeof vectorize.query !== 'function') {
+      console.error('Vectorize not available or missing query function');
+      return c.json({ results: [] });
+    }
+    
+    const results = await vectorize.query(vector, {
+      namespace: "content",
+      topK: 20,
+      returnMetadata: true,
+    });
+    
+    // Ensure results and matches exist
+    if (!results || !results.matches) {
+      console.error('Invalid vectorize results:', results);
+      return c.json({ results: [] });
+    }
+    
+    const filtered = results.matches.filter((r: any) => r.score > 0.3);
+    const ids = filtered.map((r: any) => r?.metadata?.quoteId).filter(Boolean) as Array<string>;
+    
+    if (ids.length === 0) {
+      return c.json({ results: [] });
+    }
+    
+    const quotes = await quotesByIdsPreserveOrder(c, ids);
+    const enriched = await enrichWithScore(c as any, quotes as any[]);
+    return c.json({ results: enriched });
+  } catch (error) {
+    console.error('Search error:', error);
+    return c.json({ results: [], error: 'Search failed' }, 500);
   }
-  const results = await vectorize.query(vector, {
-    namespace: "content",
-    topK: 20,
-    returnMetadata: true,
-  });
-  const filtered = results.matches.filter((r: any) => r.score > 0.3);
-  const ids = filtered.map((r: any) => r?.metadata?.quoteId) as Array<string>;
-  const quotes = await quotesByIdsPreserveOrder(c, ids);
-  const enriched = await enrichWithScore(c as any, quotes as any[]);
-  return c.json({ results: enriched });
 });
 
 app.get('/api/quotes/mine', async (c) => {
@@ -520,7 +562,8 @@ app.get("/me", (c) => {
 });
 
 app.get("/search", (c) => {
-  return c.render(<Search />);
+  // Redirect to home page which now has search functionality
+  return c.redirect("/");
 });
 
 app.get("/quotes/:quoteId", async (c) => {
@@ -550,14 +593,16 @@ app.post('/api/quotes/batch', async (c) => {
 	const text = await response.text();
 	const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
 	const parsed = lines.map((line) => {
-		// Format: "Quote text": Tag1, Tag2, Tag3
-		const match = line.match(/^"(.+?)"\s*:\s*(.*)$/);
-		if (!match) {
-			return { quote: line.replace(/^"|"$/g, ''), tags: null };
+		// Format: "Quote text" | Author Name | Tag1, Tag2, Tag3
+		// Or: "Quote text" | | Tag1, Tag2, Tag3 (empty author field)
+		const parts = line.split('|').map(p => p.trim());
+		if (parts.length >= 2) {
+			const quote = parts[0].replace(/^"|"$/g, '');
+			const author = parts[1] && parts[1].length > 0 ? parts[1] : null;
+			const tags = parts[2] || '';
+			return { quote, author, tags };
 		}
-		const quote = match[1];
-		const tags = match[2] || '';
-		return { quote, tags };
+		return { quote: line.replace(/^"|"$/g, ''), author: null, tags: null };
 	});
 
 	const slice = typeof limit === 'number' && limit > 0 ? parsed.slice(0, limit) : parsed;
@@ -567,7 +612,8 @@ app.post('/api/quotes/batch', async (c) => {
 	for (const item of slice) {
     const quote = sanitizeQuoteText(item.quote);
     const normalizedTags = await normalizeTagsToAllowed(c as any, item.tags);
-    const quoteId = await insertQuote(c, quote, null, normalizedTags);
+    const author = item.author || null;
+    const quoteId = await insertQuote(c, quote, author, normalizedTags);
 		await c.env.PUBLISH.create({
 	      id: `seed-batch-${crypto.randomUUID()}`,
 	      params: { quoteId, quote }
