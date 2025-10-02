@@ -6,7 +6,18 @@
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"build": "npm run cf-typegen && tsc --noEmit",
+		"wipe:local": "bash scripts/wipe-data.sh --local",
+		"wipe:remote": "bash scripts/wipe-data.sh --remote",
+		"wipe:both": "bash scripts/wipe-data.sh --both",
+		"load:local": "node scripts/load-initial.mjs --local",
+		"load:remote": "node scripts/load-initial.mjs --remote",
+		"load:both": "node scripts/load-initial.mjs --both"
+	},
+	"dependencies": {
+		"hono": "^4.6.6",
+		"openai": "^4.68.3"
 	},
 	"devDependencies": {
 		"typescript": "^5.5.2",

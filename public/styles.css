@@ -1,0 +1,626 @@
+html {
+  background-color: #faf8f6;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif;
+  background-color: #faf8f6;
+  color: #1f2937;
+  margin: 0;
+  padding: 0;
+  display: block;
+  min-height: 100vh;
+}
+
+:root {
+  --header-h: 64px;
+}
+
+header {
+  padding: 12px 24px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  background: #faf8f6;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1000;
+}
+
+.logo {
+  max-width: 300px;
+  height: auto;
+}
+
+.brand {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  /* Solid light khaki color */
+  /* color: #ffffff; */
+  color: #c8b59b;
+  /* color: linear-gradient(rgba(255, 189, 135, 0.6), rgba(255, 189, 135, .6)), #0000; */
+}
+
+/* Remove underline from brand link in the header */
+header > a,
+header > a:hover,
+header > a:focus {
+  text-decoration: none;
+}
+
+nav a {
+  margin-left: 8px;
+  text-decoration: none;
+  color: #374151;
+  background: #ffffff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+nav a:hover {
+  background: #f9fafb;
+}
+
+main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 0;
+  padding-left: 12px; /* global equal side gutters */
+  padding-right: 12px; /* global equal side gutters */
+  box-sizing: border-box;
+}
+
+#puns-container,
+#quotes-container,
+/* Shared grid container styles */
+.pun-grid,
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto 0;
+  justify-content: center;
+}
+
+/* Make the outer card on the detail screen 50% transparent */
+#quote-detail-section {
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  box-shadow: none;
+}
+
+#quote-detail-section:hover {
+  box-shadow: none;
+}
+
+/* Only underline the quote text on hover/focus, not author or tags */
+.pun-box:hover .pun-text,
+.quote-box:hover .quote-text,
+.pun-box[role="link"]:hover .pun-text,
+.pun-box[role="link"]:focus .pun-text,
+.pun-box[role="link"]:focus-visible .pun-text,
+.quote-box[role="link"]:hover .quote-text,
+.quote-box[role="link"]:focus .quote-text,
+.quote-box[role="link"]:focus-visible .quote-text {
+  text-decoration: underline;
+  text-decoration-color: #c3b091; /* match brand khaki */
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Override Pico's [role="link"] underline on the whole card */
+.pun-box[role="link"]:hover,
+.pun-box[role="link"]:focus,
+.pun-box[role="link"]:focus-visible,
+.quote-box[role="link"]:hover,
+.quote-box[role="link"]:focus,
+.quote-box[role="link"]:focus-visible {
+  text-decoration: none !important;
+}
+
+/* Tag buttons tint: stronger orange overlay for emphasis */
+.tag,
+#select-tags-btn {
+  background: linear-gradient(rgba(255, 189, 135, 0.6), rgba(255, 189, 135, .6)), #ffffff;
+  border-color: rgba(255, 115, 0, 0.25);
+}
+
+.tag-option {
+  background: linear-gradient(rgba(255, 189, 135, 0.6), rgba(255, 189, 135, 0.6)), #fafafa;
+  border-color: rgba(255, 115, 0, 0.25);
+}
+/* Global warm tint overlay: subtle peachy-orange warmth across entire page */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* soft peach tone */
+  background: #FBAD2E;
+  opacity: 0.15; /* adjust 0.04–0.10 to taste */
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 2147483647; /* ensure overlay sits above all content */
+}
+
+.search-section {
+  padding: 24px;
+  width: 100%;
+  max-width: 900px;
+  margin: 24px auto 0;
+  text-align: center;
+}
+
+#search-input {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  width: 100%;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+}
+
+#search-input::placeholder {
+  color: #6b7280;
+}
+
+/* Create page form styles */
+#quote-input {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  width: 100%;
+  min-height: 140px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+}
+
+#quote-input::placeholder {
+  color: #6b7280;
+}
+
+#author-input {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+#select-tags-btn {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+#select-tags-btn.required {
+  border-color: #ef4444; /* red-500 */
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+#select-tags-btn.required::after {
+  content: '(required)';
+  color: #ef4444;
+  font-weight: 600;
+  margin-left: 0.25em;
+}
+
+.tag-select-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+/* Ensure both elements center themselves in the grid row */
+.tag-select-row #select-tags-btn,
+.tag-select-row .tags {
+  align-self: center;
+}
+
+/* Ensure selected tag chips align vertically with the select button */
+.tag-select-row .tags {
+  margin-top: 0;
+  align-items: baseline;
+}
+
+/* Make selected tag chips visually match the Select tags button height */
+.tag-select-row .tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 8px;
+  line-height: 1.2;
+}
+
+#submit-quote {
+  background: #c3b091;
+  color: #ffffff;
+  border: 1px solid #b6a27f;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+#submit-quote:hover {
+  background: #b6a27f;
+}
+
+#search-results {
+  padding-top: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Ensure comfortable equal side padding handled globally by main */
+
+/* Style the "Similar Quotes" title */
+#similar-quotes-section > h2 {
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 400; /* not bold */
+  font-style: italic;
+  font-size: 1.1rem; /* slightly smaller */
+  margin-top: 16px;
+}
+
+.pun-box,
+.quote-box {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 24px 22px; /* base padding */
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.pun-box:hover,
+.quote-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.pun-text,
+.quote-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word; /* break long words */
+  overflow-wrap: anywhere; /* allow breaks within long tokens */
+  color: #111827;
+}
+
+.author-line {
+  margin-top: 8px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.subheading {
+  color: #6b5d4d; /* soft brown for subheadings */
+  font-weight: 600;
+  margin-top: 16px;
+}
+
+.page-title {
+  color: #6b5d4d; /* match subheading tone for consistency */
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(0,0,0,0.1);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.empty-text {
+  color: rgba(0,0,0,0.5);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.preview-title {
+  display: none;
+  font-style: italic;
+  color: rgba(0,0,0,0.5);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.punchline {
+  display: none;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.pun-box:hover .punchline,
+.quote-box:hover .punchline {
+  display: block;
+}
+
+.heart {
+  position: absolute;
+  bottom: 2px; /* maximize separation from tags without extra bottom padding */
+  right: 12px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px; /* minimal internal padding */
+  background-image: url('/icons/heart.png');
+  background-repeat: no-repeat;
+  background-position: right 6px center; /* pull icon closer to downvote while preserving hit area */
+  background-size: 28px 28px; /* larger base icon */
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+  text-indent: -9999px; /* hide any fallback text */
+  overflow: hidden;
+  display: inline-block;
+  opacity: 0.5;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.heart.liked {
+  transform: scale(.9); /* liked base size */
+  background-image: url('/icons/heart-filled.png');
+  background-blend-mode: multiply;
+  background-repeat: no-repeat, no-repeat;
+  background-position: center, center;
+  background-size: contain, contain;
+  opacity: 1;
+}
+
+.heart:hover {
+  transform: scale(1.2); /* subtle hover for unliked */
+  opacity: 1;
+}
+
+.heart.liked:hover {
+  transform: scale(1); /* liked hover target */
+}
+
+.downvote {
+  position: absolute;
+  bottom: 2px; /* align with heart after moving lower */
+  right: 44px; /* bring closer to heart */
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px; /* minimal internal padding */
+  background-image: url('/icons/thumbsdown-outline.png');
+  background-repeat: no-repeat;
+  background-position: left 6px center; /* pull icon closer to heart while preserving hit area */
+  background-size: 26px 26px; /* base icon slightly larger */
+  text-indent: -9999px; /* hide any fallback text */
+  overflow: hidden;
+  display: inline-block;
+  opacity: 0.5;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: right 0.16s ease-in-out, transform 0.16s ease-in-out;
+}
+
+.downvote.active {
+  transform: scale(1.15);
+  background-image: url('/icons/thumbsdown-filled.png');
+  opacity: 0.5;
+}
+
+/* When the heart is liked and scales up, give extra spacing to avoid overlap */
+.heart.liked ~ .downvote {
+  right: 48px; /* maintain a touch more space when state changes */
+}
+
+.score {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #f3f4f6;
+  color: #111827;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-weight: 600;
+}
+
+/* Reserve space so absolute elements don't overlap text */
+.pun-box,
+.quote-box {
+  padding-bottom: 64px; /* reserve space so buttons never touch tags */
+  padding-top: 56px;   /* add clear space from score area */
+}
+
+.tags {
+  margin-top: 10px;
+  margin-bottom: 14px; /* add breathing room above buttons */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.tag-modal {
+  position: fixed;
+  top: var(--header-h, 64px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100; /* above sticky header */
+}
+
+.tag-modal-content {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px 16px 10px; /* tighter bottom spacing */
+  width: min(700px, 90%);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  position: relative;
+}
+
+.tag-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: #6b5d4d; /* match brand khaki-brown tone */
+}
+
+/* Improve title contrast and remove bold weight */
+.tag-modal-header h3 {
+  margin: 0;
+  color: #3f3a2d;
+  font-weight: 400;
+  opacity: 0.5; /* softer, 50% transparent */
+}
+
+#tag-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: #6b5d4d;
+  border: none;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#tag-modal-close:hover {
+  background: #efe9de;
+}
+
+.tag-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 12px;
+  max-height: 50vh;
+  overflow: auto;
+}
+
+.tag-option {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #f7f4ee; /* warm neutral for better contrast */
+  border: 1px solid #e5ded1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #1f2937;
+}
+
+/* Highlight a tag row when its checkbox is selected */
+.tag-option:has(input:checked) {
+  background: #efe9de;
+  border-color: #c3b091;
+  box-shadow: 0 0 0 2px rgba(195, 176, 145, 0.25);
+}
+
+.tag-option .tag-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: #ffffff; /* avoid heavy contrast; tag color may override inline */
+  flex: 0 0 12px;
+  margin-left: 2px;
+}
+
+/* Custom checkbox: light by default, khaki when checked */
+.tag-option input[type="checkbox"] {
+  margin: 0;
+  flex: 0 0 auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #d6cfbf;
+  border-radius: 6px;
+  background: #ffffff;
+  display: inline-block;
+  position: relative;
+}
+.tag-option input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(195, 176, 145, 0.35);
+}
+.tag-option input[type="checkbox"]:checked {
+  background: #c3b091 !important;
+  border-color: #b6a27f;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%23ffffff' stroke-width='2.4' d='M3 8l3 3 7-7'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
+.tag-option span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-modal-actions {
+  margin-top: 8px;
+  text-align: right;
+}
+
+.tag-modal-actions button {
+  background: #c3b091; /* khaki primary */
+  color: #ffffff;
+  border: 1px solid #b6a27f;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin: 0; /* remove default bottom margin */
+}
+
+.tag-modal-actions button:hover {
+  background: #b6a27f;
+}
+
+.pun-grid,
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 90%;
+  max-width: 1200px;
+  margin-top: 20px;
+}

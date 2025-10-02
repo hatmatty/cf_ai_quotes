@@ -1,59 +1,69 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "cf-ai-quotes",
-	"main": "src/index.ts",
-	"compatibility_date": "2025-10-01",
-	"migrations": [
+	"name": "quotes",
+	"main": "src/index.tsx",
+	"compatibility_date": "2025-03-07",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	},
+	"assets": {
+		"directory": "public",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
 		{
-			"new_sqlite_classes": [
-				"MyDurableObject"
-			],
-			"tag": "v1"
+			"binding": "DB",
+			"database_name": "quotes",
+			"database_id": "262f42ed-e10a-418a-bdfd-9c961a4e9d74"
 		}
 	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"class_name": "MyDurableObject",
-				"name": "MY_DURABLE_OBJECT"
-			}
-		]
+	"ai": {
+		"binding": "AI"
 	},
-	"observability": {
-		"enabled": true
+	"vars": {
+		"MODE": "PRODUCTION"
+	},
+	"vectorize": [
+		{
+			"binding": "VECTORIZE",
+			"index_name": "quotes"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "LEADERBOARD",
+			"id": "1dd0bdbf93d940a3ac6b25ed07e7d79b"
+		}
+	],
+	"workflows": [
+		{
+			"name": "publish",
+			"binding": "PUBLISH",
+			"class_name": "PublishWorkflow"
+		},
+		{
+			"name": "interaction",
+			"binding": "INTERACTION",
+			"class_name": "InteractionWorkfow"
+		},
+		{
+			"name": "leaderboard",
+			"binding": "LEADERBOARD_WORKFLOW",
+			"class_name": "LeaderboardWorkflow"
+		},
+		{
+			"name": "autoquote",
+			"binding": "AUTOQUOTE",
+			"class_name": "AutoQuoteWorkflow"
+		}
+	],
+	"triggers": {
+		"crons": [
+			"*/30 * * * *"
+		]
 	}
-	/**
-	 * Smart Placement
-	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-	 */
-	// "placement": { "mode": "smart" }
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 */
-	// "vars": { "MY_VARIABLE": "production_value" }
-	/**
-	 * Note: Use secrets to store sensitive data.
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-	/**
-	 * Static Assets
-	 * https://developers.cloudflare.com/workers/static-assets/binding/
-	 */
-	// "assets": { "directory": "./public/", "binding": "ASSETS" }
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
 }
